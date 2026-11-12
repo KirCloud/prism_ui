@@ -148,7 +148,13 @@ class _PressSurfaceState extends State<PressSurface>
   void didUpdateWidget(PressSurface oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_enabled && (_reveal != null || (_press?.value ?? 0) > 0)) {
-      _cancelPress();
+      // The owner of the states controller may be the widget rebuilding this
+      // one, and it rebuilds again when the press leaves the controller.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_enabled) {
+          _cancelPress();
+        }
+      });
     }
     final states = widget.statesController;
     if (states != null && states != oldWidget.statesController) {
