@@ -9,6 +9,7 @@ import 'package:prism_ui/shape.dart';
 import 'package:prism_ui/sheet_navigator.dart';
 import 'package:prism_ui/surface.dart';
 import 'package:prism_ui/theme_data.dart';
+import 'package:prism_ui/view_scope.dart';
 
 const Duration _sideSheetEnterDuration = Duration(milliseconds: 300);
 const Duration _sideSheetExitDuration = Duration(milliseconds: 200);
@@ -269,7 +270,16 @@ class _ModalSideSheetState<T> extends State<_ModalSideSheet<T>> {
     assert(debugCheckHasMediaQuery(context));
     final localizations = UiLocalizations.of(context);
     final String routeLabel = _getRouteLabel(localizations);
-    final width = _widthFor(MediaQuery.sizeOf(context).width);
+    // A sheet opened beside a wide page outlives the window narrowing to
+    // the mobile view, where no page is left to show beside it.
+    final fillsView =
+        InheritedModel.inheritFrom<ViewScope>(
+          context,
+          aspect: ViewScopeAspect.isMobile,
+        )?.isMobile ??
+        false;
+    final viewWidth = MediaQuery.sizeOf(context).width;
+    final width = fillsView ? viewWidth : _widthFor(viewWidth);
 
     final route = widget.route;
     return AnimatedBuilder(

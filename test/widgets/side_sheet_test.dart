@@ -149,4 +149,42 @@ void main() {
     );
     semantics.dispose();
   });
+
+  testWidgets('a side sheet spans the view once it turns mobile', (
+    tester,
+  ) async {
+    final isMobile = ValueNotifier(false);
+    addTearDown(isMobile.dispose);
+
+    await tester.pumpWidget(
+      ValueListenableBuilder(
+        valueListenable: isMobile,
+        child: _opener(
+          onPressed: (context) => showModalSideSheet<void>(
+            context: context,
+            builder: (_) => const Text('Side'),
+          ),
+        ),
+        builder: (context, mobile, child) {
+          return ViewScope(
+            size: MediaQuery.sizeOf(context),
+            isMobile: mobile,
+            child: child!,
+          );
+        },
+      ),
+    );
+    await tester.tap(find.text('Open sheet'));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byType(SideSheet)).left, greaterThan(0));
+
+    isMobile.value = true;
+    await tester.pump();
+
+    final view = tester.view.physicalSize / tester.view.devicePixelRatio;
+    final sheet = tester.getRect(find.byType(SideSheet));
+    expect(sheet.left, 0);
+    expect(sheet.width, view.width);
+    expect(tester.takeException(), isNull);
+  });
 }
