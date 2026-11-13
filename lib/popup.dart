@@ -33,15 +33,7 @@ typedef PopupAnchorResolver = Rect? Function();
 
 typedef PopupOpen = void Function();
 
-enum PopupPlacement {
-  overAnchorEnd,
-  overAnchorStart,
-  belowPoint,
-
-  /// Clear of the anchor's end edge, bottoms aligned, so a press on the
-  /// anchor never lets go over a row, as a menu over it would let it.
-  besideAnchorEnd,
-}
+enum PopupPlacement { overAnchorEnd, overAnchorStart, belowPoint }
 
 const _screenMargin = 16.0;
 
@@ -1327,10 +1319,6 @@ class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
               anchor.left,
               _yBelowPoint(childSize.height, insets.top, maxY),
             ),
-            PopupPlacement.besideAnchorEnd => (
-              anchor.right + _avoidGap,
-              anchor.bottom - childSize.height,
-            ),
           };
     final minY = placement == PopupPlacement.belowPoint
         ? insets.top
@@ -1408,6 +1396,7 @@ class PopupAnchor extends StatefulWidget {
     required this.popupBuilder,
     this.placement = PopupPlacement.overAnchorEnd,
     this.bare = false,
+    this.opensOnPress = true,
   });
 
   final Widget Function(PopupOpen open) targetBuilder;
@@ -1418,6 +1407,11 @@ class PopupAnchor extends StatefulWidget {
 
   /// Whether the target shows no surface of its own at rest, as a bar's title.
   final bool bare;
+
+  /// Whether a press opens the popup at once and slides on into it, picking
+  /// the row it lets go over. Off, only the target's own tap opens it, so a
+  /// click that wobbles over a row laid on the target picks nothing.
+  final bool opensOnPress;
 
   @override
   State<PopupAnchor> createState() => _PopupAnchorState();
@@ -1623,6 +1617,18 @@ class _PopupAnchorState extends State<PopupAnchor> {
 
   @override
   Widget build(BuildContext context) {
+    final target = ValueListenableBuilder<bool>(
+      valueListenable: _sourceHidden,
+      builder: (_, hidden, child) =>
+          Opacity(opacity: hidden ? 0 : 1, child: child),
+      child: RepaintBoundary(
+        key: _sourceKey,
+        child: widget.targetBuilder(_open),
+      ),
+    );
+    if (!widget.opensOnPress) {
+      return target;
+    }
     return RawGestureDetector(
       excludeFromSemantics: true,
       gestures: {
@@ -1640,15 +1646,7 @@ class _PopupAnchorState extends State<PopupAnchor> {
                 ..onCancel = _handlePressCancel,
             ),
       },
-      child: ValueListenableBuilder<bool>(
-        valueListenable: _sourceHidden,
-        builder: (_, hidden, child) =>
-            Opacity(opacity: hidden ? 0 : 1, child: child),
-        child: RepaintBoundary(
-          key: _sourceKey,
-          child: widget.targetBuilder(_open),
-        ),
-      ),
+      child: target,
     );
   }
 }
