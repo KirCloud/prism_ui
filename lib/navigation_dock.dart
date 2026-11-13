@@ -302,9 +302,16 @@ class _DockSurface extends StatelessWidget {
 }
 
 class NavigationDockDestination {
-  const NavigationDockDestination({required this.glyph, required this.label});
+  const NavigationDockDestination({
+    required this.glyph,
+    required this.label,
+    this.icon,
+  });
 
   final Glyph glyph;
+
+  /// Stands in for [glyph] in its own colors, as an account's picture does.
+  final Widget? icon;
   final String label;
 }
 
@@ -1677,44 +1684,61 @@ class _FloatingBarItemState extends State<_FloatingBarItem> {
         blue: math.min(tint.b * brightness, 1),
       );
     }
-    final content = _LensTint(
-      part: widget.part,
-      lens: widget.lens,
-      lensWidth: widget.lensWidth,
-      jelly: widget.jelly,
-      lift: widget.lift,
-      parallax: widget.parallax,
-      index: widget.index,
-      color: tint,
-      textDirection: Directionality.of(context),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: _labelInset),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GlyphIcon(
+    final icon = widget.destination.icon;
+    Widget layer({required Color? tint, required Widget icon, Widget? label}) {
+      return _LensTint(
+        part: widget.part,
+        lens: widget.lens,
+        lensWidth: widget.lensWidth,
+        jelly: widget.jelly,
+        lift: widget.lift,
+        parallax: widget.parallax,
+        index: widget.index,
+        color: tint,
+        textDirection: Directionality.of(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: _labelInset),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox.square(dimension: _iconSize, child: icon),
+              const SizedBox(height: _labelGap),
+              SizedBox(height: widget.labelHeight, child: label),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final tinted = layer(
+      tint: tint,
+      icon: icon == null
+          ? GlyphIcon(
               widget.destination.glyph,
               size: _iconSize,
               color: color,
               fill: 1,
-            ),
-            const SizedBox(height: _labelGap),
-            SizedBox(
-              height: widget.labelHeight,
-              child: Center(
-                child: Text(
-                  widget.destination.label,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  style: widget.labelStyle?.copyWith(color: color),
-                ),
-              ),
-            ),
-          ],
+            )
+          : const SizedBox.shrink(),
+      label: Center(
+        child: Text(
+          widget.destination.label,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.ellipsis,
+          style: widget.labelStyle?.copyWith(color: color),
         ),
       ),
     );
+    final content = icon == null
+        ? tinted
+        : Stack(
+            fit: StackFit.passthrough,
+            children: [
+              tinted,
+              Positioned.fill(child: layer(tint: null, icon: icon)),
+            ],
+          );
     if (widget.part == _LensPart.inside) {
       return content;
     }
@@ -1772,7 +1796,9 @@ class _LensTint extends SingleChildRenderObjectWidget {
   final ValueListenable<double> lift;
   final ValueListenable<double> parallax;
   final int index;
-  final Color color;
+
+  /// Null leaves what lies under the lens in its own colors.
+  final Color? color;
   final TextDirection textDirection;
 
   @override
@@ -1814,7 +1840,7 @@ class _RenderLensTint extends RenderProxyBox {
     required ValueListenable<double> lift,
     required ValueListenable<double> parallax,
     required int index,
-    required Color color,
+    required Color? color,
     required TextDirection textDirection,
   }) : _part = part,
        _lens = lens,
@@ -1911,8 +1937,8 @@ class _RenderLensTint extends RenderProxyBox {
     markNeedsPaint();
   }
 
-  Color _color;
-  set color(Color value) {
+  Color? _color;
+  set color(Color? value) {
     if (value == _color) {
       return;
     }
@@ -2092,7 +2118,13 @@ class _RenderLensTint extends RenderProxyBox {
     Rect lensBounds,
     Matrix4? motion,
   ) {
-    final filter = ColorFilter.mode(_color, BlendMode.srcIn);
+    final color = _color;
+    if (color == null) {
+      _tint.layer = null;
+      _paintMoved(context, offset, motion, _insideMotion);
+      return;
+    }
+    final filter = ColorFilter.mode(color, BlendMode.srcIn);
     if (needsCompositing) {
       _tint.layer = context.pushColorFilter(
         offset,
