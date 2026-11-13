@@ -67,12 +67,16 @@ class SnapSheetRoute<T> extends PopupRoute<T>
     required this.barrierLabel,
     this.detents = snapSheetDetents,
     this.fitsContent = false,
+    this.initialDetent = 0,
     this.initialScrollOffset = 0,
-  });
+  }) : assert(initialDetent >= 0 && initialDetent < detents.length);
 
   final SnapSheetBuilder builder;
   final Color sheetBarrierColor;
   final List<double> detents;
+
+  /// The index into [detents] the sheet first rests at.
+  final int initialDetent;
 
   final bool fitsContent;
 
@@ -337,7 +341,8 @@ class _Settling extends _Activity {
 class _SheetModel extends ChangeNotifier {
   _SheetModel({required this.route, required TickerProvider vsync})
     : detents = route.detents,
-      fitsContent = route.fitsContent {
+      fitsContent = route.fitsContent,
+      _activity = _Resting(route.initialDetent) {
     _ticker = vsync.createTicker(_tick);
     route.animation!.addListener(_syncLift);
   }
@@ -374,7 +379,7 @@ class _SheetModel extends ChangeNotifier {
   double contentHeight = 0;
   _RenderSheetContent? _content;
 
-  _Activity _activity = const _Resting(0);
+  _Activity _activity;
 
   Animation<double> get _presentation => route.animation!;
 

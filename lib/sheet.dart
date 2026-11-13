@@ -23,7 +23,13 @@ class SheetProps {
 
   final List<double> detents;
 
-  const SheetProps({this.backgroundColor, this.detents = snapSheetDetents});
+  final int initialDetent;
+
+  const SheetProps({
+    this.backgroundColor,
+    this.detents = snapSheetDetents,
+    this.initialDetent = 0,
+  });
 }
 
 @immutable
@@ -136,6 +142,7 @@ Future<T?> _showBottomSheet<T>(
     SnapSheetRoute<T>(
       builder: (sheetContext, _) => builder(sheetContext),
       detents: props.detents,
+      initialDetent: props.initialDetent,
       fitsContent: true,
       sheetBarrierColor: context.colorScheme.modalScrim,
       barrierLabel: UiLocalizations.of(context).close,
