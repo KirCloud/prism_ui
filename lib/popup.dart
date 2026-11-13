@@ -33,7 +33,15 @@ typedef PopupAnchorResolver = Rect? Function();
 
 typedef PopupOpen = void Function();
 
-enum PopupPlacement { overAnchorEnd, overAnchorStart, belowPoint }
+enum PopupPlacement {
+  overAnchorEnd,
+  overAnchorStart,
+  belowPoint,
+
+  /// Clear of the anchor's end edge, bottoms aligned, so a press on the
+  /// anchor never lets go over a row, as a menu over it would let it.
+  besideAnchorEnd,
+}
 
 const _screenMargin = 16.0;
 
@@ -1318,6 +1326,10 @@ class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
             PopupPlacement.belowPoint => (
               anchor.left,
               _yBelowPoint(childSize.height, insets.top, maxY),
+            ),
+            PopupPlacement.besideAnchorEnd => (
+              anchor.right + _avoidGap,
+              anchor.bottom - childSize.height,
             ),
           };
     final minY = placement == PopupPlacement.belowPoint
