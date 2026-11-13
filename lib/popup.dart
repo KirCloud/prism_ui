@@ -1823,6 +1823,7 @@ class PopupMenuItem {
     required this.label,
     this.subtitle,
     this.glyph,
+    this.leading,
     this.onPressed,
     this.danger = false,
     this.checked,
@@ -1834,6 +1835,9 @@ class PopupMenuItem {
   final String label;
   final String? subtitle;
   final Glyph? glyph;
+
+  /// Stands in for [glyph] in its own colors, as an account's picture does.
+  final Widget? leading;
   final VoidCallback? onPressed;
   final bool danger;
   final bool? checked;
@@ -2058,7 +2062,9 @@ class _PopupMenuState extends State<PopupMenu>
       final checked = item.checked == true;
       final row =
           (checked ? _itemArrowPadding : _itemPadding).horizontal +
-          (item.glyph != null ? _itemIconSize + 12 : 0) +
+          (item.glyph != null || item.leading != null
+              ? _itemIconSize + 12
+              : 0) +
           label +
           (checked ? 8 + _submenuArrowSize : 0);
       width = math.max(width, row);
@@ -2411,7 +2417,10 @@ class _PopupMenuState extends State<PopupMenu>
           padding: arrow != null ? _itemArrowPadding : _itemPadding,
           child: Row(
             children: [
-              if (item.glyph case final glyph?) ...[
+              if (item.leading case final leading?) ...[
+                leading,
+                const SizedBox(width: 12),
+              ] else if (item.glyph case final glyph?) ...[
                 GlyphIcon(glyph, size: _itemIconSize, color: foregroundColor),
                 const SizedBox(width: 12),
               ],
