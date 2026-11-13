@@ -651,7 +651,14 @@ class AppBar extends StatelessWidget {
                 color: colorScheme.onSurfaceVariant,
                 size: 24,
               ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: actions),
+              // The view mode follows a window resize a frame late, so for
+              // that frame a desktop bar can be narrower than its actions.
+              child: UnconstrainedBox(
+                constrainedAxis: Axis.vertical,
+                alignment: AlignmentDirectional.centerEnd,
+                clipBehavior: Clip.hardEdge,
+                child: Row(mainAxisSize: MainAxisSize.min, children: actions),
+              ),
             ),
       centerMiddle: centerTitle,
       middleSpacing: titleSpacing ?? NavigationToolbar.kMiddleSpacing,
