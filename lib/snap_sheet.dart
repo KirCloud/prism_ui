@@ -68,6 +68,7 @@ class SnapSheetRoute<T> extends PopupRoute<T>
     this.detents = snapSheetDetents,
     this.fitsContent = false,
     this.initialDetent = 0,
+    this.fitsShortContent = false,
     this.initialScrollOffset = 0,
   }) : assert(initialDetent >= 0 && initialDetent < detents.length);
 
@@ -79,6 +80,10 @@ class SnapSheetRoute<T> extends PopupRoute<T>
   final int initialDetent;
 
   final bool fitsContent;
+
+  /// Content shorter than the shortest detent sets every stop to its own
+  /// height instead of leaving blank below it.
+  final bool fitsShortContent;
 
   final double initialScrollOffset;
 
@@ -342,6 +347,7 @@ class _SheetModel extends ChangeNotifier {
   _SheetModel({required this.route, required TickerProvider vsync})
     : detents = route.detents,
       fitsContent = route.fitsContent,
+      fitsShortContent = route.fitsShortContent,
       _activity = _Resting(route.initialDetent) {
     _ticker = vsync.createTicker(_tick);
     route.animation!.addListener(_syncLift);
@@ -350,6 +356,7 @@ class _SheetModel extends ChangeNotifier {
   final SnapSheetRoute<dynamic> route;
   final List<double> detents;
   final bool fitsContent;
+  final bool fitsShortContent;
 
   late final Ticker _ticker;
   Duration? _lastTick;
@@ -398,7 +405,10 @@ class _SheetModel extends ChangeNotifier {
   /// A fit sheet follows its content up to each detent but never rests below
   /// the shortest one; each keeps what it shows above the keyboard.
   List<double> get _stops {
-    final shortest = detents.first * _available;
+    final shortest = math.min(
+      detents.first * _available,
+      fitsShortContent ? _fitHeight : double.infinity,
+    );
     final top = _top;
     return [
       for (final fraction in detents)

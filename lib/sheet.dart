@@ -25,10 +25,13 @@ class SheetProps {
 
   final int initialDetent;
 
+  final bool fitsShortContent;
+
   const SheetProps({
     this.backgroundColor,
     this.detents = snapSheetDetents,
     this.initialDetent = 0,
+    this.fitsShortContent = false,
   });
 }
 
@@ -143,6 +146,7 @@ Future<T?> _showBottomSheet<T>(
       builder: (sheetContext, _) => builder(sheetContext),
       detents: props.detents,
       initialDetent: props.initialDetent,
+      fitsShortContent: props.fitsShortContent,
       fitsContent: true,
       sheetBarrierColor: context.colorScheme.modalScrim,
       barrierLabel: UiLocalizations.of(context).close,
