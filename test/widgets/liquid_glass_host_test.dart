@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:prism_ui/prism_ui.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../helpers/test_app.dart';
@@ -746,6 +747,54 @@ void main() {
     expect(near.b, inExclusiveRange(0.15, 0.5));
     expect(await _behind(tester, pane, const Offset(120, 150)), _red);
   });
+
+  for (final (replaces, coverage) in [(false, 0.8), (true, 0.6)]) {
+    testWidgets('a pane lies over its backdrop unless it replaces it '
+        '(replaces: $replaces)', (tester) async {
+      const boundary = Key('boundary');
+      const tinted = LiquidGlassStyle(tint: Color(0x330000FF), blur: 0, rim: 0);
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: boundary,
+          child: HostApp(
+            onGenerateRoute: (settings) => HomeRoute(
+              settings: settings,
+              builder: (_) => LiquidGlassScope(
+                enabled: true,
+                child: LiquidGlassHost(
+                  enabled: true,
+                  child: Stack(
+                    children: [
+                      const Positioned.fill(
+                        child: ColoredBox(color: Color(0x80FF0000)),
+                      ),
+                      Positioned.fromRect(
+                        rect: const Rect.fromLTWH(100, 100, 200, 100),
+                        child: LiquidGlass(
+                          style: tinted,
+                          borderRadius: BorderRadius.zero,
+                          replacesBackdrop: replaces,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final alpha = await tester.runAsync(() async {
+        final image = await tester
+            .renderObject<RenderRepaintBoundary>(find.byKey(boundary))
+            .toImage();
+        final bytes = (await image.toByteData())!;
+        image.dispose();
+        return bytes.getUint8((150 * image.width + 200) * 4 + 3) / 255;
+      });
+      expect(alpha, closeTo(coverage, 0.02));
+    });
+  }
 
   testWidgets('a host turned off captures nothing', (tester) async {
     await tester.pumpWidget(

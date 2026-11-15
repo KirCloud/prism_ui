@@ -800,7 +800,9 @@ class _LiquidGlassHostLayer extends ContainerLayer {
         entry.veil.b,
         entry.veil.a,
       ],
-      identical(entry.root, this) ? BlendMode.srcOver : BlendMode.src,
+      identical(entry.root, this) && !pane.replacesBackdrop
+          ? BlendMode.srcOver
+          : BlendMode.src,
       entry.style,
     );
   }

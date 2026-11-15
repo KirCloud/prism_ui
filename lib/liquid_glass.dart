@@ -729,6 +729,7 @@ class LiquidGlass extends StatelessWidget {
     this.glow,
     this.hold,
     this.steadyFrost = false,
+    this.replacesBackdrop = false,
     this.child,
   });
 
@@ -737,6 +738,9 @@ class LiquidGlass extends StatelessWidget {
   /// As [LiquidGlassPane.paint] takes it, but from the pane's top left.
   final Rect? hold;
   final bool steadyFrost;
+
+  /// Draws the pane in place of what it covers, as a translucent backdrop needs.
+  final bool replacesBackdrop;
 
   /// Rounds each corner on its own in place of the pill.
   final BorderRadius? borderRadius;
@@ -792,6 +796,7 @@ class LiquidGlass extends StatelessWidget {
         glow: glow,
         hold: hold,
         steadyFrost: steadyFrost,
+        replacesBackdrop: replacesBackdrop,
         child: child,
       );
     }
@@ -810,6 +815,7 @@ class LiquidGlass extends StatelessWidget {
         glow: null,
         hold: hold,
         steadyFrost: steadyFrost,
+        replacesBackdrop: replacesBackdrop,
         child: child,
       ),
       child: child,
@@ -829,6 +835,7 @@ class _LiquidGlassPane extends SingleChildRenderObjectWidget {
     required this.glow,
     required this.hold,
     required this.steadyFrost,
+    required this.replacesBackdrop,
     super.child,
   });
 
@@ -842,6 +849,7 @@ class _LiquidGlassPane extends SingleChildRenderObjectWidget {
   final LiquidGlassGlow? glow;
   final Rect? hold;
   final bool steadyFrost;
+  final bool replacesBackdrop;
 
   @override
   _RenderLiquidGlass createRenderObject(BuildContext context) {
@@ -856,6 +864,7 @@ class _LiquidGlassPane extends SingleChildRenderObjectWidget {
       glow: glow,
       hold: hold,
       steadyFrost: steadyFrost,
+      replacesBackdrop: replacesBackdrop,
     );
   }
 
@@ -874,7 +883,8 @@ class _LiquidGlassPane extends SingleChildRenderObjectWidget {
       ..fading = fading
       ..glow = glow
       ..hold = hold
-      ..steadyFrost = steadyFrost;
+      ..steadyFrost = steadyFrost
+      ..replacesBackdrop = replacesBackdrop;
   }
 }
 
@@ -890,8 +900,10 @@ class _RenderLiquidGlass extends RenderProxyBox {
     required LiquidGlassGlow? glow,
     required Rect? hold,
     required bool steadyFrost,
+    required bool replacesBackdrop,
   }) : _hold = hold,
        _steadyFrost = steadyFrost,
+       _replacesBackdrop = replacesBackdrop,
        _group = group,
        _style = style,
        _borderRadius = borderRadius,
@@ -918,6 +930,15 @@ class _RenderLiquidGlass extends RenderProxyBox {
       return;
     }
     _steadyFrost = value;
+    markNeedsPaint();
+  }
+
+  bool _replacesBackdrop;
+  set replacesBackdrop(bool value) {
+    if (value == _replacesBackdrop) {
+      return;
+    }
+    _replacesBackdrop = value;
     markNeedsPaint();
   }
 
@@ -1082,6 +1103,7 @@ class _RenderLiquidGlass extends RenderProxyBox {
         group: _group,
         hold: _hold?.shift(offset),
         steadyFrost: _steadyFrost,
+        replacesBackdrop: _replacesBackdrop,
         glow:
             _glow ??
             LiquidGlassGlow(
@@ -1188,6 +1210,7 @@ class LiquidGlassPane {
     Rect? hold,
     double? holdFrost,
     bool steadyFrost = false,
+    bool replacesBackdrop = false,
     LiquidGlassRim? rim,
     Object? group,
   }) {
@@ -1239,6 +1262,7 @@ class LiquidGlassPane {
       ..hold = hold
       ..holdFrost = holdFrost
       ..steadyFrost = steadyFrost
+      ..replacesBackdrop = replacesBackdrop
       ..rim = rim
       ..group = group;
     context.addLayer(pane);
@@ -1349,6 +1373,7 @@ class _LiquidGlassLayer extends Layer {
   Rect? hold;
   double? holdFrost;
   bool steadyFrost = false;
+  bool replacesBackdrop = false;
   LiquidGlassRim? rim;
   Object? group;
   _Placement? _held;
