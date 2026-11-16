@@ -32,7 +32,7 @@ class Tooltip extends StatelessWidget {
       semanticsTooltip: excludeFromSemantics ? null : message,
       tooltipBuilder: (context, animation) => FadeTransition(
         opacity: animation,
-        child: _TooltipBox(message: message),
+        child: TooltipBox(message: message),
       ),
       triggerMode: triggerMode,
       positionDelegate: (position) => positionDependentBox(
@@ -48,8 +48,9 @@ class Tooltip extends StatelessWidget {
   }
 }
 
-class _TooltipBox extends StatelessWidget {
-  const _TooltipBox({required this.message});
+/// The box a [Tooltip] shows, for one placed by other means.
+class TooltipBox extends StatelessWidget {
+  const TooltipBox({super.key, required this.message});
 
   final String message;
 
