@@ -69,7 +69,6 @@ class SnapSheetRoute<T> extends PopupRoute<T>
     this.fitsContent = false,
     this.initialDetent = 0,
     this.fitsShortContent = false,
-    this.initialScrollOffset = 0,
   }) : assert(initialDetent >= 0 && initialDetent < detents.length);
 
   final SnapSheetBuilder builder;
@@ -84,8 +83,6 @@ class SnapSheetRoute<T> extends PopupRoute<T>
   /// Content shorter than the shortest detent sets every stop to its own
   /// height instead of leaving blank below it.
   final bool fitsShortContent;
-
-  final double initialScrollOffset;
 
   @override
   final String barrierLabel;
@@ -870,10 +867,7 @@ class _SnapSheet extends StatefulWidget {
 class _SnapSheetState extends State<_SnapSheet>
     with SingleTickerProviderStateMixin {
   late final _model = _SheetModel(route: widget.route, vsync: this);
-  late final _scrollController = _SheetScrollController(
-    model: _model,
-    initialScrollOffset: widget.route.initialScrollOffset,
-  );
+  late final _scrollController = _SheetScrollController(model: _model);
 
   Duration? _lastWheel;
 
@@ -1427,7 +1421,7 @@ class _SheetScrollController extends ScrollController
       physics: _SheetContentPhysics(parent: physics),
       context: context,
       oldPosition: oldPosition,
-      initialPixels: initialScrollOffset,
+      initialPixels: initialPixelsFromTop(context, initialScrollOffset),
       model: model,
     );
   }
